@@ -1,1 +1,0 @@
-lanuv-weather-plotter
