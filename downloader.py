@@ -8,6 +8,9 @@ import requests
 # Tool um zu gucken, ob Dateien/Verzeichnisse existieren - Systemunabhängig !!
 from pathlib import Path
 
+# Für Datum und co
+from datetime import date
+
 # Definition von Fehlermeldungen (stehen außerhalb, da ich sonst über das
 # 80 zeichen limit komme)
 
@@ -22,7 +25,6 @@ Invalide Anfragenummer: {}. Muss eine Zahl von 0-8 sein.
 """.replace(
     "\n", ""
 )
-
 
 class Downloader:
 
@@ -63,39 +65,51 @@ class Downloader:
 
         # Es kann passieren, dass die Webseite nicht erreichbar ist
         try:
-            seite, real = anfrage
+            # Tupel in zwei Variablen ausladen
+            seitenname, realname = anfrage
             # Gewünschte Datei
-            datei = real + ".csv"
-            # Daten der Webs eite
-            daten = requests.get(basis + seite + ".csv").text
+            datei = realname + ".csv"
             # Speicherplatz der Datei
             dateispeicherplatz = Downloader.SPEICHERFPAD / Path(datei)
 
             # Datei aktualisieren
             if dateispeicherplatz.is_file():
 
-                # überprüfe, ob die datumszeile (erste Zeile) gleich ist
-                with dateispeicherplatz.open() as datei:
-                    # \n muss entfernt werden, sonst klappt der vgl. nicht
-                    erste_zeile = datei.readline()[:-1]
+                # Datumszeile aus der Datei holen
+                with dateispeicherplatz.open() as lokale_datei:
+                    erste_zeile = lokale_datei.readline()
 
-                """
-                https://stackoverflow.com/questions/11833266/
-                how-do-i-read-the-first-line-of-a-string/11833277#11833277
-                """
+                # wenn das heutige Datum nicht in der Datei steht ist diese alt
 
-                # wenn ungleich muss die Datei aktualisiert werden
-                if not erste_zeile == daten.partition("\n")[0]:
+                heute = date.today().strftime("%d.%m.%Y")
+                # quelle : 
+                # https://www.programiz.com/
+                # python-programming/datetime/current-datetime
+                # Example 2 Zeile 6 abgewandelt
+
+                # ist das heutige Datum NICHT in der Infozeile der csv-Datei
+                if not heute in erste_zeile:
+                    print("{} wird aktualisiert".format(datei))
+                    
+                    # herunterladen von der Webseite
+                    daten = requests.get(basis + seitenname + ".csv").text
+                    
                     # schreibe Inhalt in Datei
-                    with dateispeicherplatz.open("w") as datei:
-                        datei.write(daten)
+                    with dateispeicherplatz.open("w") as lokale_datei:
+                        lokale_datei.write(daten)
 
             else:
-                # schreibe Inhalt in Datei
-                with dateispeicherplatz.open("w") as datei:
-                    datei.write(daten)
+                pfad = basis + seitenname + ".csv"
+                print("{} wird heruntergeladen".format(pfad))
 
-            return real, dateispeicherplatz
+                # Herunterladen von der Webseite
+                daten = requests.get(pfad).text
+
+                # schreibe Inhalt in Datei
+                with dateispeicherplatz.open("w") as lokale_datei:
+                    lokale_datei.write(daten)
+
+            return datei, dateispeicherplatz
 
         except requests.ConnectionError:
             # Seite nicht erreichbar

@@ -1,9 +1,6 @@
 # Tool zum Zeichnen
 import plotly.graph_objects as go
 
-# Tool für berechnungen der Datensätze
-import numpy as np
-
 # (https://plot.ly/python/ referenz)
 import pandas as pd
 
@@ -13,13 +10,15 @@ from dateutil.relativedelta import relativedelta
 
 
 class Plotter:
-    def __init__(self, name, dateipfad, tage, messstation, alle_stationen, einheit):
+    def __init__(self, name, datei, tage, messstation, allestationen, einheit):
+
         self.name = name
-        self.dateipfad = dateipfad
+        self.dateipfad = datei
         self.tage = tage
         self.messstation = messstation
-        self.alle_stationen = alle_stationen
+        self.allestationen = allestationen
         self.einheit = einheit
+        # plotten
         self.draw()
 
     def draw(self):
@@ -37,15 +36,16 @@ class Plotter:
 
         """
             Manche Einträge sind entweder leer oder schätzen den Wert nach 
-            oben mit einem "<" ab
+            oben mit einem "<" ab. Außerdem müssen die Einträge in eine
+            Gleitkommazahl konvertiert werden.
         """
 
         def convert(item):
 
             if item == "":
-                return "0"
+                return float("0")
             else:
-                return item.replace("<", "")
+                return float(item.replace("<", "").replace(",", "."))
 
         # https://honingds.com/blog/pandas-read_csv/
         # da wurde alles erklärt
@@ -53,7 +53,7 @@ class Plotter:
         df = pd.read_csv(
             self.dateipfad,
             # umbenennung
-            names=["date", "time"] + self.alle_stationen,
+            names=["date", "time"] + self.allestationen,
             # daten in der csv sind in verkehrt
             skiprows=range(0, 24 * (365 - self.tage - 1)),
             # csv mit ; getrennt
@@ -65,12 +65,18 @@ class Plotter:
             encoding="utf-8",
             # Datum wir aus date und time zusammengesetzt
             date_parser=dateparser,
-            # Konvertierung von ungültigen Einträgen
-            converters=dict((w, convert) for w in self.alle_stationen),
+            # Konvertierung von ungültigen Einträgen. Dafür gehen die Werte
+            # in die Funktion convert. (Werte=Mögliche Messtationen)
+            # https://stackoverflow.com/questions/1747817/
+            # create-a-dictionary-with-list-comprehension/1747827#1747827
+            converters=dict((w, convert) for w in self.allestationen),
         )
 
         fig = go.Figure()
         # linie hinzufügen
+
+        print(df[self.messstation])
+
         fig.add_trace(
             go.Scatter(
                 x=df["date_col"],
@@ -80,13 +86,14 @@ class Plotter:
                 name=self.name,
             )
         )
+        # (angelehnt an https://stackoverflow.com/questions/
+        # 441147/how-to-subtract-a-day-from-a-date/29104710#29104710)
+        vom = (datetime.today() - relativedelta(days=self.tage)).date()
+        bis = datetime.today().date()
 
+        # Sachinformationen hinzufügen
         fig.update_layout(
-            # (kopiert von https://stackoverflow.com/questions/441147/how-to-subtract-a-day-from-a-date/29104710#29104710)
-            xaxis_title="Zeitraum vom {} bis {}".format(
-                (datetime.today() - relativedelta(days=self.tage)).date(),
-                datetime.today().date(),
-            ),
+            xaxis_title="Zeitraum vom {} bis {}".format(vom, bis),
             yaxis_title="{} {}".format(self.name, self.einheit),
         )
 
