@@ -75,8 +75,6 @@ class Plotter:
         fig = go.Figure()
         # linie hinzufügen
 
-        print(df[self.messstation])
-
         fig.add_trace(
             go.Scatter(
                 x=df["date_col"],
