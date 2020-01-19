@@ -55,7 +55,7 @@ class Plotter:
             # umbenennung
             names=["date", "time"] + self.allestationen,
             # daten in der csv sind in verkehrt
-            skiprows=range(0, 24 * (365 - self.tage - 1)),
+            skiprows=range(0, 24 * (365 - self.tage) + 2),
             # csv mit ; getrennt
             sep=";",
             # erste Zeile ist kommentar
