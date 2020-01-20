@@ -50,7 +50,7 @@ class Plotter:
 
         # wegen header=1 müssen die ersten beiden Zeilen nicht betrachtet werden
         if self.tage == 365:
-            ueberspringen = 0:
+            ueberspringen = 0
         else:
             # Neuer Tag fängt immer eine Zeile danach an     
             ueberspringen = 24 * (366 - self.tage)
