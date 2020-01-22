@@ -47,17 +47,16 @@ class Plotter:
             else:
                 return float(item.replace("<", "").replace(",", "."))
 
-
-        # wegen header=1 müssen die ersten beiden Zeilen nicht betrachtet werden
+        # wegen header=1 müssen die ersten beiden Zeilen nicht betrachtet
+        # werden
         if self.tage == 365:
             ueberspringen = 0
         else:
-            # Neuer Tag fängt immer eine Zeile danach an     
+            # Neuer Tag fängt immer eine Zeile danach an
             ueberspringen = 24 * (366 - self.tage)
 
         # https://honingds.com/blog/pandas-read_csv/
         # da wurde alles erklärt
-        
 
         df = pd.read_csv(
             self.dateipfad,
