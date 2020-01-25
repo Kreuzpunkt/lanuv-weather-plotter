@@ -50,7 +50,8 @@ class Auswahlhelfer:
         self.auswahl_station()
 
         self.plotter = Plotter(
-            self.name, self.datei, self.tage, self.station, self.stationen, self.einheit
+            self.name, self.datei, self.tage, 
+            self.station, self.stationen, self.einheit
         )
 
     def auswahl_messwerte(self):
