@@ -10,18 +10,20 @@ from dateutil.relativedelta import relativedelta
 
 
 class Plotter:
-    def __init__(self, name, datei, tage, messstation, allestationen, einheit):
+    def __init__(self, name, datei, tage, messstation, allestationen, einheit, modus):
 
         self.name = name
         self.dateipfad = datei
         self.tage = tage
-        self.messstation = messstation
         self.allestationen = allestationen
         self.einheit = einheit
-        # plotten
-        self.draw()
+        # um mehrere Wetterstationen zu unterstüzen
+        self.messstation = list(messstation)
+        # parse and draw
+        self.df = self.interpret_csv()
+        self.draw(modus)
 
-    def draw(self):
+    def interpret_csv(self):
         def dateparser(datum, zeit):
             """
                 pandas nimmt 24:00 uhr nicht an, es muss 0:00 sein.
@@ -73,6 +75,8 @@ class Plotter:
             encoding="utf-8",
             # Datum wir aus date und time zusammengesetzt
             date_parser=dateparser,
+            # Begrenzung auf nur nötige daten
+            usecols=["date", "time"] + self.messstation,
             # Konvertierung von ungültigen Einträgen. Dafür gehen die Werte
             # in die Funktion convert. (Werte=Mögliche Messtationen)
             # https://stackoverflow.com/questions/1747817/
@@ -80,18 +84,33 @@ class Plotter:
             converters=dict((w, convert) for w in self.allestationen),
         )
 
+        return df
+
+    def draw(self, modus):
+
         fig = go.Figure()
         # linie hinzufügen
 
-        fig.add_trace(
-            go.Scatter(
-                x=df["date_col"],
-                y=df[self.messstation],
-                # spline sieht schön aus
-                line_shape="spline",
-                name=self.name,
+        for station in self.messstation:
+
+            data = self.df[station]
+
+            if modus == 2:
+                arr = data.to_numpy()
+                # wert von tag i minus wert von tag i-1
+                data = arr[1:] - arr[:-1]
+
+            fig.add_trace(
+                go.Scatter(
+                    # letzter tag hat keinen vorgänger
+                    x=self.df["date_col"][1:],
+                    y=data,
+                    # spline sieht schön aus
+                    line_shape="spline",
+                    name=station,
+                )
             )
-        )
+
         # (angelehnt an https://stackoverflow.com/questions/
         # 441147/how-to-subtract-a-day-from-a-date/29104710#29104710)
         vom = (datetime.today() - relativedelta(days=self.tage)).date()
@@ -99,7 +118,9 @@ class Plotter:
 
         # Sachinformationen hinzufügen
         fig.update_layout(
-            xaxis_title="Zeitraum vom {} bis {}".format(vom, bis),
+            xaxis_title="{} im Zeitraum vom {} bis {}".format(
+                "Differezanzeige" if modus - 1 else "Normalwertanzeige", vom, bis
+            ),
             yaxis_title="{} {}".format(self.name, self.einheit),
         )
 

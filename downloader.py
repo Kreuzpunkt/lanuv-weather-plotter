@@ -26,6 +26,7 @@ Invalide Anfragenummer: {}. Muss eine Zahl von 0-8 sein.
     "\n", ""
 )
 
+
 class Downloader:
 
     # hier werden Daten abgelegt
@@ -82,7 +83,7 @@ class Downloader:
                 # wenn das heutige Datum nicht in der Datei steht ist diese alt
 
                 heute = date.today().strftime("%d.%m.%Y")
-                # quelle : 
+                # quelle :
                 # https://www.programiz.com/
                 # python-programming/datetime/current-datetime
                 # Example 2 Zeile 6 abgewandelt
@@ -90,10 +91,10 @@ class Downloader:
                 # ist das heutige Datum NICHT in der Infozeile der csv-Datei
                 if not heute in erste_zeile:
                     print("{} wird aktualisiert".format(datei))
-                    
+
                     # herunterladen von der Webseite
                     daten = requests.get(basis + seitenname + ".csv").text
-                    
+
                     # schreibe Inhalt in Datei
                     with dateispeicherplatz.open("w") as lokale_datei:
                         lokale_datei.write(daten)

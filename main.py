@@ -9,7 +9,8 @@ Diese Programm erzeugt ein Diagramm it aktuellen Wetterdaten der letzten Tage.
 Hierfür werden 3 Paramtere gebraucht:
 - Gewünschter Messwert                  Standard=Temperatur
 - Anzahl der darzustellenden Tage       Standard=7
-- Messstation                           
+- Messstation             
+- Anzeigemodus für Werte                Standard=Normal              
 
 Folgende Messwerte stehen zur Auswahl:
 
@@ -48,10 +49,15 @@ class Auswahlhelfer:
         self.erstelle_auswahl()
         self.auswahl_tage()
         self.auswahl_station()
-
+        self.auswahl_modus()
         self.plotter = Plotter(
-            self.name, self.datei, self.tage, 
-            self.station, self.stationen, self.einheit
+            self.name,
+            self.datei,
+            self.tage,
+            self.station,
+            self.stationen,
+            self.einheit,
+            self.modus,
         )
 
     def auswahl_messwerte(self):
@@ -124,7 +130,7 @@ class Auswahlhelfer:
                 print("Muss eine Zahl größer 0 sein.")
                 self.auswahl_tage()
             else:
-                print("Auswertung für {} Tage".format(auswahl))
+                print("Auswertung für {} Tage\n".format(auswahl))
                 self.tage = auswahl
 
         except ValueError:
@@ -138,18 +144,47 @@ class Auswahlhelfer:
         for station in self.stationen:
             print("\t", station, sep="")
 
-        eingabe = input("Gib den Namen der Wetterstation an: ")
+        eingabe = input("Gib die Namen der Wetterstation mit Kommas getrennt an: ")
 
         # Fehlertoleranz erhöhen
-        auswahl = eingabe.upper()
+        auswahl = eingabe.upper().replace(" ", "")
+        wahlstationen = auswahl.split(",")
 
-        # Fehlerüberprüfung
-        if auswahl in self.stationen:
-            print("Messstation {} ausgewählt".format(auswahl))
-            self.station = auswahl
+        for station in wahlstationen:
+            if station not in self.stationen:
+                print("Eingabe inkorrekt")
+                break
         else:
-            print("Eingabe inkorrekt")
-            self.auswahl_station()
+            print("Messstation {} ausgewählt\n".format(",".join(wahlstationen)))
+            self.station = wahlstationen
+            # um nicht in eine rekursion zu kommen
+            return
+        self.auswahl_station()
+
+    def auswahl_modus(self):
+        print("Möglicher Modus:\n\t1) Normalwertanzeige\n\t2) Differezanzeige\n")
+        eingabe = input("Gib die Nummer des Modus an: ")
+
+        try:
+            # Standardwert
+            if eingabe == "":
+                auswahl = 1
+            else:
+                auswahl = int(eingabe)
+            if not auswahl in {1, 2}:
+                print("Modus muss 1 oder 2 sein")
+                self.auswahl_modus()
+            else:
+                print(
+                    "{} ausgewählt".format(
+                        "Differezanzeige" if auswahl - 1 else "Normalwertanzeige"
+                    )
+                )
+                self.modus = auswahl
+
+        except ValueError:
+            print("Eingabe inkorrekt.")
+            self.auswahl_modus()
 
 
 Auswahlhelfer().automodus()
